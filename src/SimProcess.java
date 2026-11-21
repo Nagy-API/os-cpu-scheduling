@@ -6,65 +6,61 @@ public class SimProcess {
 
     public SimProcess(String id, int arrival, int burst, int priority) {
         if (id == null || id.isBlank() || arrival < 0 || burst <= 0) {
-            throw new IllegalArgumentException("Process needs an ID, arrival >= 0 and burst > 0");
+            throw new IllegalArgumentException("Invalid process data");
         }
         this.id = id;
-        this.arrivalTime = arrival;
-        this.burstTime = burst;
-        this.initialPriority = priority;
-        this.remainingTime = burst;
+        arrivalTime = arrival;
+        burstTime = burst;
+        initialPriority = priority;
+        remainingTime = burst;
     }
 
+    // Both schedulers must start with a fresh copy of each process.
     public SimProcess copy() {
         return new SimProcess(id, arrivalTime, burstTime, initialPriority);
     }
 
     public void startIfFirst(int time) {
-        if (time < arrivalTime || remainingTime == 0 || completionTime != -1) {
-            throw new IllegalArgumentException("Process cannot start at time " + time);
+        if (time < arrivalTime || remainingTime == 0) {
+            throw new IllegalArgumentException("Invalid start time");
         }
-        if (firstStartTime == -1) {
-            firstStartTime = time;
-        } else if (time < firstStartTime) {
-            throw new IllegalArgumentException("Execution time cannot go backwards");
-        }
+        if (firstStartTime == -1) firstStartTime = time;
     }
 
     public void executeOneUnit() {
-        if (firstStartTime == -1 || remainingTime == 0 || completionTime != -1) {
-            throw new IllegalStateException("Process is not ready to execute");
+        if (firstStartTime == -1 || remainingTime == 0) {
+            throw new IllegalStateException("Process cannot run now");
         }
         remainingTime--;
     }
 
     public void finish(int time) {
-        if (completionTime != -1 || remainingTime != 0 || firstStartTime == -1) {
-            throw new IllegalStateException("Process must finish execution exactly once");
+        if (firstStartTime == -1 || remainingTime != 0 || completionTime != -1) {
+            throw new IllegalStateException("Process has not finished its CPU work");
         }
-        if ((long) time < (long) firstStartTime + burstTime) {
-            throw new IllegalArgumentException("Completion time is earlier than required CPU work");
+        if (time - firstStartTime < burstTime) {
+            throw new IllegalArgumentException("Invalid finish time");
         }
         completionTime = time;
     }
 
+    // Called once when a process leaves Tier 1 with work remaining.
     public void enterTier2(int time) {
-        if (tier2EntryTime != -1 || firstStartTime == -1 || remainingTime == 0 ||
-                remainingTime == burstTime || completionTime != -1 ||
-                (long) time < (long) firstStartTime + burstTime - remainingTime) {
-            throw new IllegalStateException("Invalid or repeated Tier 2 demotion");
+        if (tier2EntryTime != -1 || firstStartTime == -1 ||
+                remainingTime == 0 || remainingTime == burstTime ||
+                time <= firstStartTime) {
+            throw new IllegalStateException("Invalid Tier 2 entry");
         }
         tier2EntryTime = time;
     }
 
     private void requireCompleted() {
         if (completionTime == -1) {
-            throw new IllegalStateException("Metrics are available only after completion");
+            throw new IllegalStateException("Process is not finished yet");
         }
     }
 
-    public int waitingTime() {
-        return turnaroundTime() - burstTime;
-    }
+    public int waitingTime() { return turnaroundTime() - burstTime; }
 
     public int turnaroundTime() {
         requireCompleted();
