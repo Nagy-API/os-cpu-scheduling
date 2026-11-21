@@ -15,7 +15,6 @@ public class SimProcess {
         remainingTime = burst;
     }
 
-    // Both schedulers must start with a fresh copy of each process.
     public SimProcess copy() {
         return new SimProcess(id, arrivalTime, burstTime, initialPriority);
     }
@@ -44,7 +43,6 @@ public class SimProcess {
         completionTime = time;
     }
 
-    // Called once when a process leaves Tier 1 with work remaining.
     public void enterTier2(int time) {
         if (tier2EntryTime != -1 || firstStartTime == -1 ||
                 remainingTime == 0 || remainingTime == burstTime ||

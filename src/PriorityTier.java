@@ -10,7 +10,6 @@ public class PriorityTier {
         this.agingInterval = agingInterval;
     }
 
-    // TODO Member 4: Queue management and non-preemptive dispatch selection.
     public void add(SimProcess process, int time) {
         throw new UnsupportedOperationException("TODO: Member 4");
     }
