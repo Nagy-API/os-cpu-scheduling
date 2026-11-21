@@ -20,6 +20,7 @@ public class SimulationResult {
             }
         }
         this.algorithmName = name;
+        // Keep the SAME process objects that a scheduler updates; copy only the list.
         this.processes = new ArrayList<>(processes);
     }
 
@@ -70,10 +71,15 @@ public class SimulationResult {
             lastCompletion = Math.max(lastCompletion, p.getCompletionTime());
             totalBurst += p.getBurstTime();
         }
-        long runSteps = steps.stream().filter(s -> "RUN".equals(s.getKind())).count();
+        // Count actual CPU work; CS and IDLE are not useful execution time.
+        int runSteps = 0;
+        for (TimeStep step : steps) {
+            if ("RUN".equals(step.getKind())) runSteps++;
+        }
         if (steps.size() != lastCompletion || runSteps != totalBurst) {
             throw new IllegalStateException("Time-step log does not match completed CPU work");
         }
+        // CS and IDLE count toward elapsed time, not useful CPU execution.
         return 100.0 * runSteps / steps.size();
     }
 
