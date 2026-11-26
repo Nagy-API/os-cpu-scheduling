@@ -8,9 +8,7 @@ import java.util.StringJoiner;
 public class PriorityTier {
     private final List<SimProcess> queue = new ArrayList<>();
     private final Map<SimProcess, Integer> entryTimes = new HashMap<>();
-    private final Map<SimProcess, Integer> entryOrder = new HashMap<>();
     private final int agingInterval;
-    private int nextOrder = 0;
 
     public PriorityTier(int agingInterval) {
         if (agingInterval <= 0) throw new IllegalArgumentException("Aging interval must be > 0");
@@ -25,7 +23,6 @@ public class PriorityTier {
         if (process.getTier2EntryTime() == -1) process.enterTier2(time);
         if (time < process.getTier2EntryTime()) throw new IllegalArgumentException("Invalid Tier 2 time");
         entryTimes.putIfAbsent(process, process.getTier2EntryTime());
-        entryOrder.putIfAbsent(process, nextOrder++);
         queue.add(process);
     }
 
@@ -33,10 +30,8 @@ public class PriorityTier {
         SimProcess best = null;
         for (SimProcess p : queue) {
             if (best == null || effectivePriority(p, time) < effectivePriority(best, time) ||
-                (effectivePriority(p, time) == effectivePriority(best, time) &&
-                 (entryTimes.get(p) < entryTimes.get(best) ||
-                  (entryTimes.get(p).equals(entryTimes.get(best)) &&
-                   entryOrder.get(p) < entryOrder.get(best))))) {
+                    (effectivePriority(p, time) == effectivePriority(best, time) &&
+                     entryTimes.get(p) < entryTimes.get(best))) {
                 best = p;
             }
         }
