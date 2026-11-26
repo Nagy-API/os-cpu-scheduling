@@ -2,15 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
-/**
- * ConsolePrinter – prints a full per-time-index timeline of a SimulationResult.
- *
- * TimeSteps inside SimulationResult represent events recorded at specific time
- * indices (`step.getTime()`), not necessarily one entry per time unit.
- * This printer reconstructs every time index t = 0 .. endTime (up to the
- * completion of the last process) and displays the active CPU state, queue
- * snapshots, and any event occurring at t.
- */
+
 public class ConsolePrinter {
 
     private static final String RESET   = "\u001B[0m";
@@ -30,7 +22,7 @@ public class ConsolePrinter {
             lastCompletion = Math.max(lastCompletion, p.getCompletionTime());
         }
 
-        // ── Header ───────────────────────────────────────────────────────────
+
         line('=', 110);
         System.out.println(BOLD + "  Algorithm : " + result.getAlgorithmName() + RESET);
         line('=', 110);
@@ -44,7 +36,7 @@ public class ConsolePrinter {
             printGantt(steps, lastCompletion);
         }
 
-        // ── Per-process stats table ───────────────────────────────────────────
+
         line('-', 110);
         System.out.println(BOLD + "  Process Statistics" + RESET);
         line('-', 110);
@@ -63,7 +55,7 @@ public class ConsolePrinter {
         }
         line('-', 110);
 
-        // ── Averages ──────────────────────────────────────────────────────────
+
         System.out.printf(YELLOW +
                 "  Avg Response  : %.2f%n" +
                 "  Avg Turnaround: %.2f%n" +
@@ -78,7 +70,6 @@ public class ConsolePrinter {
         System.out.println();
     }
 
-    // ── Full timeline printer ─────────────────────────────────────────────────
 
     private static void printTimeline(List<TimeStep> steps, int lastCompletion) {
         TreeMap<Integer, List<TimeStep>> eventsByTime = new TreeMap<>();
@@ -119,7 +110,7 @@ public class ConsolePrinter {
                 continue;
             }
 
-            // Pad plain strings BEFORE applying ANSI colours so columns stay aligned
+
             String kindPlain = String.format("%-6s", currentState.getKind());
             String kindColored;
             switch (currentState.getKind()) {
@@ -143,9 +134,7 @@ public class ConsolePrinter {
         }
     }
 
-    /**
-     * Gantt chart built from actual TimeStep.getTime() intervals.
-     */
+
     private static void printGantt(List<TimeStep> steps, int lastCompletion) {
         TreeMap<Integer, TimeStep> eventAt = new TreeMap<>();
         for (TimeStep s : steps) {
@@ -154,7 +143,7 @@ public class ConsolePrinter {
         int endTime = Math.max(lastCompletion, eventAt.lastKey());
         if (endTime <= 0) return;
 
-        // Reconstruct per-unit labels for [0 .. endTime - 1]
+
         String[] labels = new String[endTime];
         TimeStep current = null;
         for (int t = 0; t < endTime; t++) {
