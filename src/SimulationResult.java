@@ -24,9 +24,9 @@ public class SimulationResult {
     }
 
     public void addStep(TimeStep step) {
-        //if (step == null || step.getTime() != steps.size()) {
-        //    throw new IllegalArgumentException("Exactly one chronological step per time unit, starting at 0");
-        //}
+        if (step == null || step.getTime() != steps.size()) {
+            throw new IllegalArgumentException("Exactly one chronological step per time unit, starting at 0");
+        }
         steps.add(step);
     }
 
