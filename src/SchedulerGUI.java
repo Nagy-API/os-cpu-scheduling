@@ -52,7 +52,7 @@ public class SchedulerGUI extends JFrame {
 
     // ── Results tab widgets ───────────────────────────────────────────────────
     private final DefaultTableModel resultModel;
-    private final JLabel avgResponseLabel, avgTurnaroundLabel, avgWaitingLabel;
+    private final JLabel avgResponseLabel, avgTurnaroundLabel, avgWaitingLabel, cpuUtilizationLabel;
 
     // ── Timeline tab widgets ──────────────────────────────────────────────────
     private final GanttPanel ganttPanel;
@@ -194,14 +194,16 @@ public class SchedulerGUI extends JFrame {
         resultTable.setDefaultRenderer(Object.class, new AlternatingRenderer());
         JScrollPane resScroll = styledScroll(resultTable);
 
-        JPanel avgPanel = darkPanel(new GridLayout(1, 3, 10, 0));
+        JPanel avgPanel = darkPanel(new GridLayout(1, 4, 10, 0));
         avgPanel.setBorder(new EmptyBorder(10, 14, 10, 14));
         avgResponseLabel   = avgLabel("Avg Response",   "—");
         avgTurnaroundLabel = avgLabel("Avg Turnaround", "—");
         avgWaitingLabel    = avgLabel("Avg Waiting",    "—");
+        cpuUtilizationLabel = avgLabel("CPU Utilization", "—");
         avgPanel.add(avgResponseLabel);
         avgPanel.add(avgTurnaroundLabel);
         avgPanel.add(avgWaitingLabel);
+        avgPanel.add(cpuUtilizationLabel);
 
         resultsTab.add(resScroll, BorderLayout.CENTER);
         resultsTab.add(avgPanel,  BorderLayout.SOUTH);
@@ -370,6 +372,7 @@ public class SchedulerGUI extends JFrame {
         setAvgLabel(avgResponseLabel,   "Avg Response",   result.averageResponse());
         setAvgLabel(avgTurnaroundLabel, "Avg Turnaround", result.averageTurnaround());
         setAvgLabel(avgWaitingLabel,    "Avg Waiting",    result.averageWaiting());
+        setAvgLabel(cpuUtilizationLabel, "CPU Utilization (%)", result.cpuUtilization());
 
         // Group sparse TimeStep events by their actual `step.getTime()`
         eventsByTime.clear();
