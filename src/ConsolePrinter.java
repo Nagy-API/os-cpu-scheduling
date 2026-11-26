@@ -67,10 +67,12 @@ public class ConsolePrinter {
         System.out.printf(YELLOW +
                 "  Avg Response  : %.2f%n" +
                 "  Avg Turnaround: %.2f%n" +
-                "  Avg Waiting   : %.2f%n" + RESET,
+                "  Avg Waiting   : %.2f%n" +
+                "  CPU Utilization: %.2f%%%n" + RESET,
                 result.averageResponse(),
                 result.averageTurnaround(),
-                result.averageWaiting());
+                result.averageWaiting(),
+                result.cpuUtilization());
 
         line('=', 110);
         System.out.println();
