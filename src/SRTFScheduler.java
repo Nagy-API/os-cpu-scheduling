@@ -1,8 +1,6 @@
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.StringJoiner;
 
@@ -17,14 +15,12 @@ public class SRTFScheduler {
             copies.add(p.copy());
         }
         SimulationResult result = new SimulationResult("SRTFScheduler", copies);
-        Map<SimProcess, Integer> order = new IdentityHashMap<>();
-        for (int i = 0; i < copies.size(); i++) order.put(copies.get(i), i);
         PriorityQueue<SimProcess> arrivalTimeQueue = new PriorityQueue<>(
-                Comparator.comparingInt(SimProcess::getArrivalTime).thenComparingInt(order::get));
+                Comparator.comparingInt(SimProcess::getArrivalTime).thenComparingInt(copies::indexOf));
         PriorityQueue<SimProcess> remainingTimeQueue = new PriorityQueue<>(
                 Comparator.comparingInt(SimProcess::getRemainingTime)
                           .thenComparingInt(SimProcess::getArrivalTime)
-                          .thenComparingInt(order::get));
+                          .thenComparingInt(copies::indexOf));
         arrivalTimeQueue.addAll(copies);
 
         int time = 0;
