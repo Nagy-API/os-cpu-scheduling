@@ -105,6 +105,21 @@ public class SchedulerTests {
         equal(-1, tier.effectivePriority(p, 21), "Aging below zero");
     }
 
+    private static void timelineDisplay() {
+        java.io.PrintStream original = System.out;
+        java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
+        try {
+            System.setOut(new java.io.PrintStream(output));
+            new ConsolePrinter().print(SRTFScheduler.run(
+                    List.of(new SimProcess("P1", 0, 1, 1)), 0));
+        } finally {
+            System.setOut(original);
+        }
+        String text = output.toString();
+        check(text.contains("Timeline (t = 0 .. 0)"), "Incorrect timeline last step");
+        check(!text.matches("(?s).*\\n1 +RUN +P1.*"), "Phantom RUN at completion boundary");
+    }
+
     private static void randomCases() {
         Random random = new Random(241);
         for (int test = 0; test < 1500; test++) {
@@ -124,6 +139,7 @@ public class SchedulerTests {
     public static void main(String[] args) {
         officialCases();
         edgeCases();
+        timelineDisplay();
         randomCases();
         System.out.println("PASS: " + checks + " assertions");
     }
