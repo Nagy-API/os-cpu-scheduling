@@ -332,6 +332,7 @@ public class SchedulerGUI extends JFrame {
 
 
     private void runSimulation() {
+        if (processTable.isEditing() && !processTable.getCellEditor().stopCellEditing()) return;
         List<SimProcess> procs = collectProcesses();
         if (procs == null) return;
         int cs   = (int) csSpinner.getValue();
@@ -373,7 +374,7 @@ public class SchedulerGUI extends JFrame {
             eventsByTime.computeIfAbsent(s.getTime(), k -> new ArrayList<>()).add(s);
             maxEventTime = Math.max(maxEventTime, s.getTime());
         }
-        maxTime = result.getSteps().isEmpty() ? lastCompletion : Math.max(lastCompletion, maxEventTime);
+        maxTime = Math.max(0, result.getSteps().size() - 1);
 
 
         reconstructed.clear();
@@ -414,7 +415,7 @@ public class SchedulerGUI extends JFrame {
         }
 
 
-        ganttPanel.setTimeline(eventsByTime, result.getProcesses(), maxTime);
+        ganttPanel.setTimeline(eventsByTime, result.getProcesses(), lastCompletion);
 
 
         syncingNav = true;
