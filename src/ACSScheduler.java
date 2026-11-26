@@ -1,9 +1,7 @@
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.StringJoiner;
 
@@ -19,10 +17,8 @@ public class ACSScheduler {
             copies.add(p.copy());
         }
         SimulationResult result = new SimulationResult("ACSScheduler", copies);
-        Map<SimProcess, Integer> inputOrder = new IdentityHashMap<>();
-        for (int i = 0; i < copies.size(); i++) inputOrder.put(copies.get(i), i);
         PriorityQueue<SimProcess> arrivalQueue = new PriorityQueue<>(
-                Comparator.comparingInt(SimProcess::getArrivalTime).thenComparingInt(inputOrder::get));
+                Comparator.comparingInt(SimProcess::getArrivalTime).thenComparingInt(copies::indexOf));
         arrivalQueue.addAll(copies);
         LinkedList<SimProcess> tier1 = new LinkedList<>();
         PriorityTier tier2 = new PriorityTier(agingInterval);
