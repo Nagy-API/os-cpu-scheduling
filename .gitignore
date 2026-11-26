@@ -1,7 +1,4 @@
-# vs code files
-README.md
 .vscode/
 bin/
-
-# compiled Java bytecode
+out/
 *.class

@@ -2,15 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
-/**
- * ConsolePrinter – prints a full per-time-index timeline of a SimulationResult.
- *
- * TimeSteps inside SimulationResult represent events recorded at specific time
- * indices (`step.getTime()`), not necessarily one entry per time unit.
- * This printer reconstructs every time index t = 0 .. endTime (up to the
- * completion of the last process) and displays the active CPU state, queue
- * snapshots, and any event occurring at t.
- */
+
 public class ConsolePrinter {
 
     private static final String RESET   = "\u001B[0m";
@@ -30,7 +22,7 @@ public class ConsolePrinter {
             lastCompletion = Math.max(lastCompletion, p.getCompletionTime());
         }
 
-        // ── Header ───────────────────────────────────────────────────────────
+
         line('=', 110);
         System.out.println(BOLD + "  Algorithm : " + result.getAlgorithmName() + RESET);
         line('=', 110);
@@ -44,7 +36,7 @@ public class ConsolePrinter {
             printGantt(steps, lastCompletion);
         }
 
-        // ── Per-process stats table ───────────────────────────────────────────
+
         line('-', 110);
         System.out.println(BOLD + "  Process Statistics" + RESET);
         line('-', 110);
@@ -63,20 +55,21 @@ public class ConsolePrinter {
         }
         line('-', 110);
 
-        // ── Averages ──────────────────────────────────────────────────────────
+
         System.out.printf(YELLOW +
                 "  Avg Response  : %.2f%n" +
                 "  Avg Turnaround: %.2f%n" +
-                "  Avg Waiting   : %.2f%n" + RESET,
+                "  Avg Waiting   : %.2f%n" +
+                "  CPU Utilization: %.2f%%%n" + RESET,
                 result.averageResponse(),
                 result.averageTurnaround(),
-                result.averageWaiting());
+                result.averageWaiting(),
+                result.cpuUtilization());
 
         line('=', 110);
         System.out.println();
     }
 
-    // ── Full timeline printer ─────────────────────────────────────────────────
 
     private static void printTimeline(List<TimeStep> steps, int lastCompletion) {
         TreeMap<Integer, List<TimeStep>> eventsByTime = new TreeMap<>();
@@ -88,7 +81,7 @@ public class ConsolePrinter {
 
         int endTime = Math.max(lastCompletion, maxEventTime);
 
-        System.out.println(BOLD + "  Timeline (t = 0 .. " + endTime + ")" + RESET);
+        System.out.println(BOLD + "  Timeline (t = 0 .. " + (endTime - 1) + ")" + RESET);
         line('-', 110);
         System.out.printf(BOLD + "%-5s %-6s %-7s  %-38s %-24s  %s%n" + RESET,
                 "t", "Kind", "CPU", "Tier-1 / Queue", "Tier-2", "Event");
@@ -96,7 +89,7 @@ public class ConsolePrinter {
 
         TimeStep currentState = null;
 
-        for (int t = 0; t <= endTime; t++) {
+        for (int t = 0; t < endTime; t++) {
             List<TimeStep> atT = eventsByTime.get(t);
             String eventDesc = "";
             if (atT != null && !atT.isEmpty()) {
@@ -117,7 +110,7 @@ public class ConsolePrinter {
                 continue;
             }
 
-            // Pad plain strings BEFORE applying ANSI colours so columns stay aligned
+
             String kindPlain = String.format("%-6s", currentState.getKind());
             String kindColored;
             switch (currentState.getKind()) {
@@ -141,9 +134,7 @@ public class ConsolePrinter {
         }
     }
 
-    /**
-     * Gantt chart built from actual TimeStep.getTime() intervals.
-     */
+
     private static void printGantt(List<TimeStep> steps, int lastCompletion) {
         TreeMap<Integer, TimeStep> eventAt = new TreeMap<>();
         for (TimeStep s : steps) {
@@ -152,7 +143,7 @@ public class ConsolePrinter {
         int endTime = Math.max(lastCompletion, eventAt.lastKey());
         if (endTime <= 0) return;
 
-        // Reconstruct per-unit labels for [0 .. endTime - 1]
+
         String[] labels = new String[endTime];
         TimeStep current = null;
         for (int t = 0; t < endTime; t++) {

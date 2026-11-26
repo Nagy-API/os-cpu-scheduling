@@ -1,35 +1,31 @@
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
+import javax.swing.plaf.basic.BasicArrowButton;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.util.*;
 import java.util.List;
 
-/**
- * SchedulerGUI – Swing front-end for the CPU Scheduling Simulator.
- *
- * The "Timeline" tab reconstructs every time index t = 0 .. endTime (up to the
- * completion of the last process) from the sparse TimeStep events using
- * TimeStep.getTime(), and provides slider, spinner, prev/next, table row click,
- * and Gantt click navigation.
- */
+
 public class SchedulerGUI extends JFrame {
 
-    // ── Colour palette ────────────────────────────────────────────────────────
-    private static final Color BG       = new Color(18,  18,  32);
-    private static final Color PANEL_BG = new Color(28,  28,  48);
-    private static final Color ACCENT   = new Color(99,  102, 241);
-    private static final Color ACCENT2  = new Color(16,  185, 129);
-    private static final Color ACCENT3  = new Color(245, 158,  11);
-    private static final Color TEXT     = new Color(226, 226, 240);
-    private static final Color TEXT_DIM = new Color(140, 140, 170);
-    private static final Color ROW_ALT  = new Color(36,  36,  60);
-    private static final Color BORDER_C = new Color(55,  55,  90);
-    private static final Color C_RUN    = new Color(16,  185, 129);
-    private static final Color C_CS     = new Color(245, 158,  11);
-    private static final Color C_IDLE   = new Color(90,  90, 120);
+
+    private static final Color BG       = new Color(12,  22,  34);
+    private static final Color PANEL_BG = new Color(22,  36,  52);
+    private static final Color ACCENT   = new Color(56,  189, 248);
+    private static final Color ACCENT2  = new Color(52,  211, 153);
+    private static final Color ACCENT3  = new Color(251, 191,  36);
+    private static final Color TEXT     = new Color(235, 244, 250);
+    private static final Color TEXT_DIM = new Color(166, 185, 202);
+    private static final Color ROW_ALT  = new Color(28,  45,  63);
+    private static final Color BORDER_C = new Color(58,  82, 103);
+    private static final Color C_RUN    = new Color(52,  211, 153);
+    private static final Color C_CS     = new Color(251, 191,  36);
+    private static final Color C_IDLE   = new Color(100, 116, 139);
 
     private static final Font FONT_BODY  = new Font("Segoe UI", Font.PLAIN,  14);
     private static final Font FONT_BOLD  = new Font("Segoe UI", Font.BOLD,   14);
@@ -38,35 +34,35 @@ public class SchedulerGUI extends JFrame {
     private static final Font FONT_MONO  = new Font("Consolas",  Font.PLAIN,  13);
 
     private static final Color[] PROC_COLORS = {
-        new Color(99,102,241), new Color(16,185,129), new Color(245,158,11),
-        new Color(239,68,68),  new Color(14,165,233), new Color(217,70,239),
-        new Color(251,191,36), new Color(52,211,153)
+        new Color(37,99,235), new Color(15,118,110), new Color(217,119,6),
+        new Color(190,24,93), new Color(14,116,144), new Color(124,58,237),
+        new Color(180,83,9), new Color(5,150,105)
     };
 
-    // ── Input widgets ─────────────────────────────────────────────────────────
+
     private final DefaultTableModel processModel;
     private final JTable processTable;
     private final JComboBox<String> algoCombo;
     private final JSpinner csSpinner, quantumSpinner, agingSpinner;
     private final JLabel quantumLabel, agingLabel;
 
-    // ── Results tab widgets ───────────────────────────────────────────────────
-    private final DefaultTableModel resultModel;
-    private final JLabel avgResponseLabel, avgTurnaroundLabel, avgWaitingLabel;
 
-    // ── Timeline tab widgets ──────────────────────────────────────────────────
+    private final DefaultTableModel resultModel;
+    private final JLabel avgResponseLabel, avgTurnaroundLabel, avgWaitingLabel, cpuUtilizationLabel;
+
+
     private final GanttPanel ganttPanel;
     private final JSlider    timeSlider;
     private final JSpinner   timeJumpSpinner;
-    private final JLabel     timePosLabel;    // "t = 5 / 30"
-    private final JLabel     kindLabel;       // RUN / CS / IDLE badge
-    private final JLabel     cpuLabel;        // process ID
+    private final JLabel     timePosLabel;
+    private final JLabel     kindLabel;
+    private final JLabel     cpuLabel;
     private final JTextArea  tier1Area, tier2Area, eventArea;
     private final JButton    prevBtn, nextBtn;
     private final DefaultTableModel timelineModel;
     private final JTable            timelineTable;
 
-    // ── Timeline state ────────────────────────────────────────────────────────
+
     private TreeMap<Integer, List<TimeStep>> eventsByTime = new TreeMap<>();
     private final List<TimeRow> reconstructed = new ArrayList<>();
     private int maxTime = 0;
@@ -90,7 +86,7 @@ public class SchedulerGUI extends JFrame {
         }
     }
 
-    // ── Constructor ───────────────────────────────────────────────────────────
+
     public SchedulerGUI() {
         super("CPU Scheduling Simulator");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -100,21 +96,21 @@ public class SchedulerGUI extends JFrame {
         getContentPane().setBackground(BG);
         setLayout(new BorderLayout(10, 10));
 
-        // Title
+
         JPanel titleBar = darkPanel(new FlowLayout(FlowLayout.LEFT, 16, 10));
         JLabel title = label("CPU Scheduling Simulator", FONT_HEAD, ACCENT);
         JLabel sub   = label("  ·  SRTF   ACS (Aging + Priority)", FONT_SMALL, TEXT_DIM);
         titleBar.add(title); titleBar.add(sub);
         add(titleBar, BorderLayout.NORTH);
 
-        // ── Left: input panel ─────────────────────────────────────────────────
+
         JPanel left = new JPanel();
         left.setBackground(BG);
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
         left.setBorder(new EmptyBorder(6, 8, 8, 4));
         left.setPreferredSize(new Dimension(340, 0));
 
-        // Process table
+
         processModel = new DefaultTableModel(new String[]{"PID","Arrival","Burst","Priority"}, 0) {
             public boolean isCellEditable(int r, int c) { return true; }
         };
@@ -136,7 +132,7 @@ public class SchedulerGUI extends JFrame {
         left.add(procScroll);
         left.add(vGap(12));
 
-        // Algorithm
+
         left.add(sectionLbl("Algorithm"));
         left.add(vGap(4));
         algoCombo = new JComboBox<>(new String[]{"SRTF","ACS"});
@@ -144,7 +140,7 @@ public class SchedulerGUI extends JFrame {
         left.add(algoCombo);
         left.add(vGap(12));
 
-        // Parameters
+
         left.add(sectionLbl("Parameters"));
         left.add(vGap(4));
         csSpinner      = styledSpinner(1, 0, 100, 1);
@@ -159,10 +155,10 @@ public class SchedulerGUI extends JFrame {
         left.add(paramRow(agingLabel,   agingSpinner));
         left.add(vGap(14));
 
-        // Run button
+
         JButton runBtn = new JButton("▶  Run Simulation");
         runBtn.setFont(FONT_BOLD); runBtn.setBackground(ACCENT);
-        runBtn.setForeground(Color.WHITE); runBtn.setFocusPainted(false);
+        runBtn.setForeground(BG); runBtn.setFocusPainted(false);
         runBtn.setBorder(new EmptyBorder(10, 20, 10, 20));
         runBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         runBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -176,12 +172,12 @@ public class SchedulerGUI extends JFrame {
         updateParamVisibility();
         add(left, BorderLayout.WEST);
 
-        // ── Right: tabbed pane ────────────────────────────────────────────────
+
         JTabbedPane tabs = new JTabbedPane();
         tabs.setBackground(BG); tabs.setForeground(TEXT);
         tabs.setFont(FONT_BOLD);
 
-        // ─── Tab 1: Results ───────────────────────────────────────────────────
+
         JPanel resultsTab = new JPanel(new BorderLayout(0, 10));
         resultsTab.setBackground(BG);
         resultsTab.setBorder(new EmptyBorder(8, 8, 8, 8));
@@ -194,27 +190,30 @@ public class SchedulerGUI extends JFrame {
         resultTable.setDefaultRenderer(Object.class, new AlternatingRenderer());
         JScrollPane resScroll = styledScroll(resultTable);
 
-        JPanel avgPanel = darkPanel(new GridLayout(1, 3, 10, 0));
+        JPanel avgPanel = darkPanel(new GridLayout(1, 4, 10, 0));
         avgPanel.setBorder(new EmptyBorder(10, 14, 10, 14));
         avgResponseLabel   = avgLabel("Avg Response",   "—");
         avgTurnaroundLabel = avgLabel("Avg Turnaround", "—");
         avgWaitingLabel    = avgLabel("Avg Waiting",    "—");
+        cpuUtilizationLabel = avgLabel("CPU Utilization", "—");
         avgPanel.add(avgResponseLabel);
         avgPanel.add(avgTurnaroundLabel);
         avgPanel.add(avgWaitingLabel);
+        avgPanel.add(cpuUtilizationLabel);
 
         resultsTab.add(resScroll, BorderLayout.CENTER);
         resultsTab.add(avgPanel,  BorderLayout.SOUTH);
         tabs.addTab("Results", resultsTab);
 
-        // ─── Tab 2: Timeline ──────────────────────────────────────────────────
+
         JPanel timelineTab = new JPanel(new BorderLayout(0, 8));
         timelineTab.setBackground(BG);
         timelineTab.setBorder(new EmptyBorder(8, 8, 8, 8));
 
-        // Gantt + Navigation stacked cleanly in NORTH
+
         ganttPanel = new GanttPanel(t -> navigateToTime(t));
         JScrollPane ganttScroll = styledScroll(ganttPanel);
+        styleTimelineScrollBar(ganttScroll.getHorizontalScrollBar());
         ganttScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         ganttScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         ganttScroll.setPreferredSize(new Dimension(0, 96));
@@ -250,7 +249,7 @@ public class SchedulerGUI extends JFrame {
         timelineTop.add(ganttScroll, BorderLayout.NORTH);
         timelineTop.add(navBar,      BorderLayout.CENTER);
 
-        // State inspector cards in CENTER
+
         kindLabel = label("—", FONT_BOLD, TEXT);
         kindLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         cpuLabel  = label("—", FONT_BOLD, TEXT);
@@ -277,7 +276,7 @@ public class SchedulerGUI extends JFrame {
         inspectorPanel.add(topCards);
         inspectorPanel.add(snapCards);
 
-        // Full per-time-index table in SOUTH / CENTER split
+
         timelineModel = new DefaultTableModel(
                 new String[]{"t", "Kind", "CPU", "Tier-1 / Queue", "Tier-2", "Event"}, 0) {
             public boolean isCellEditable(int r, int c) { return false; }
@@ -324,9 +323,10 @@ public class SchedulerGUI extends JFrame {
         });
 
         tabs.addTab("Timeline", timelineTab);
+        styleTabs(tabs);
         add(tabs, BorderLayout.CENTER);
 
-        // seed default processes
+
         addProcess("P1", 0, 8, 2);
         addProcess("P2", 1, 4, 1);
         addProcess("P3", 2, 9, 3);
@@ -335,9 +335,9 @@ public class SchedulerGUI extends JFrame {
         setVisible(true);
     }
 
-    // ── Simulation ────────────────────────────────────────────────────────────
 
     private void runSimulation() {
+        if (processTable.isEditing() && !processTable.getCellEditor().stopCellEditing()) return;
         List<SimProcess> procs = collectProcesses();
         if (procs == null) return;
         int cs   = (int) csSpinner.getValue();
@@ -357,7 +357,7 @@ public class SchedulerGUI extends JFrame {
     }
 
     private void displayResults(SimulationResult result) {
-        // Results tab
+
         resultModel.setRowCount(0);
         int lastCompletion = 0;
         for (SimProcess p : result.getProcesses()) {
@@ -370,17 +370,18 @@ public class SchedulerGUI extends JFrame {
         setAvgLabel(avgResponseLabel,   "Avg Response",   result.averageResponse());
         setAvgLabel(avgTurnaroundLabel, "Avg Turnaround", result.averageTurnaround());
         setAvgLabel(avgWaitingLabel,    "Avg Waiting",    result.averageWaiting());
+        setAvgLabel(cpuUtilizationLabel, "CPU Utilization (%)", result.cpuUtilization());
 
-        // Group sparse TimeStep events by their actual `step.getTime()`
+
         eventsByTime.clear();
         int maxEventTime = 0;
         for (TimeStep s : result.getSteps()) {
             eventsByTime.computeIfAbsent(s.getTime(), k -> new ArrayList<>()).add(s);
             maxEventTime = Math.max(maxEventTime, s.getTime());
         }
-        maxTime = result.getSteps().isEmpty() ? lastCompletion : Math.max(lastCompletion, maxEventTime);
+        maxTime = Math.max(0, result.getSteps().size() - 1);
 
-        // Reconstruct every time index t = 0 .. maxTime
+
         reconstructed.clear();
         timelineModel.setRowCount(0);
         TimeStep currentState = null;
@@ -418,10 +419,10 @@ public class SchedulerGUI extends JFrame {
             });
         }
 
-        // Update Gantt (using actual step.getTime() and endTime)
-        ganttPanel.setTimeline(eventsByTime, result.getProcesses(), maxTime);
 
-        // Update slider & spinner ranges cleanly
+        ganttPanel.setTimeline(eventsByTime, result.getProcesses(), lastCompletion);
+
+
         syncingNav = true;
         try {
             timeSlider.setMinimum(0);
@@ -433,7 +434,7 @@ public class SchedulerGUI extends JFrame {
             timeSlider.setValue(0);
 
             timeJumpSpinner.setModel(new SpinnerNumberModel(0, 0, Math.max(0, maxTime), 1));
-            ((JSpinner.DefaultEditor) timeJumpSpinner.getEditor()).getTextField().setBackground(new Color(40,40,70));
+            ((JSpinner.DefaultEditor) timeJumpSpinner.getEditor()).getTextField().setBackground(new Color(34,52,70));
             ((JSpinner.DefaultEditor) timeJumpSpinner.getEditor()).getTextField().setForeground(TEXT);
             ((JSpinner.DefaultEditor) timeJumpSpinner.getEditor()).getTextField().setFont(FONT_BODY);
         } finally {
@@ -443,7 +444,7 @@ public class SchedulerGUI extends JFrame {
         navigateToTime(0);
     }
 
-    /** Synchronize slider, spinner, table selection, Gantt highlight, and inspector cards to time t. */
+
     private void navigateToTime(int t) {
         if (reconstructed.isEmpty()) return;
         int clamped = Math.max(0, Math.min(t, maxTime));
@@ -492,7 +493,6 @@ public class SchedulerGUI extends JFrame {
         eventArea.setText(row.event.isEmpty() ? "(no new event at t=" + clamped + ")" : row.event);
     }
 
-    // ── Input helpers ─────────────────────────────────────────────────────────
 
     private List<SimProcess> collectProcesses() {
         List<SimProcess> list = new ArrayList<>();
@@ -527,7 +527,82 @@ public class SchedulerGUI extends JFrame {
         JOptionPane.showMessageDialog(this, m, "Input Error", JOptionPane.WARNING_MESSAGE);
     }
 
-    // ── Style helpers ─────────────────────────────────────────────────────────
+
+    private static void styleTabs(JTabbedPane tabs) {
+        tabs.setUI(new BasicTabbedPaneUI() {
+            protected void paintTabBackground(Graphics g, int placement, int index,
+                                              int x, int y, int w, int h, boolean selected) {
+                g.setColor(BG);
+                g.fillRect(x, y, w, h);
+            }
+
+            protected void paintTabBorder(Graphics g, int placement, int index,
+                                          int x, int y, int w, int h, boolean selected) {
+            }
+
+            protected void paintContentBorder(Graphics g, int placement, int selectedIndex) {
+            }
+
+            protected void paintFocusIndicator(Graphics g, int placement, Rectangle[] rectangles,
+                                               int index, Rectangle iconRect, Rectangle textRect,
+                                               boolean selected) {
+            }
+        });
+        for (int i = 0; i < tabs.getTabCount(); i++) {
+            final int index = i;
+            JLabel header = new JLabel(tabs.getTitleAt(i), SwingConstants.CENTER);
+            header.setOpaque(true);
+            header.setFont(FONT_BOLD);
+            header.setBorder(new EmptyBorder(6, 14, 6, 14));
+            header.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    tabs.setSelectedIndex(index);
+                }
+            });
+            tabs.setTabComponentAt(i, header);
+        }
+        tabs.addChangeListener(e -> refreshTabColors(tabs));
+        refreshTabColors(tabs);
+    }
+
+    private static void refreshTabColors(JTabbedPane tabs) {
+        for (int i = 0; i < tabs.getTabCount(); i++) {
+            JLabel header = (JLabel) tabs.getTabComponentAt(i);
+            boolean selected = i == tabs.getSelectedIndex();
+            header.setBackground(selected ? ACCENT : PANEL_BG);
+            header.setForeground(selected ? BG : TEXT);
+        }
+    }
+
+    private static void styleTimelineScrollBar(JScrollBar bar) {
+        bar.setBackground(PANEL_BG);
+        bar.setUI(new BasicScrollBarUI() {
+            protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
+                g.setColor(new Color(19, 37, 52));
+                g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+            }
+
+            protected void paintThumb(Graphics g, JComponent c, Rectangle bounds) {
+                if (bounds.isEmpty() || !c.isEnabled()) return;
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                    RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(77, 173, 213));
+                g2.fillRoundRect(bounds.x + 2, bounds.y + 2,
+                                 Math.max(0, bounds.width - 4),
+                                 Math.max(0, bounds.height - 4), 8, 8);
+                g2.dispose();
+            }
+
+            protected JButton createDecreaseButton(int direction) {
+                return new BasicArrowButton(direction, PANEL_BG, BORDER_C, BG, ACCENT);
+            }
+
+            protected JButton createIncreaseButton(int direction) {
+                return new BasicArrowButton(direction, PANEL_BG, BORDER_C, BG, ACCENT);
+            }
+        });
+    }
 
     private static JPanel darkPanel(LayoutManager lm) {
         JPanel p = new JPanel(lm);
@@ -543,14 +618,14 @@ public class SchedulerGUI extends JFrame {
         l.setAlignmentX(Component.LEFT_ALIGNMENT); return l;
     }
     private static JLabel avgLabel(String n, String v) {
-        JLabel l = new JLabel("<html><center><span style='color:#8080aa;font-size:11px'>"
-                + n + "</span><br><b style='font-size:16px;color:#e2e2f0'>" + v + "</b></center></html>",
+        JLabel l = new JLabel("<html><center><span style='color:#A6B9CA;font-size:11px'>"
+                + n + "</span><br><b style='font-size:16px;color:#EBF4FA'>" + v + "</b></center></html>",
                 SwingConstants.CENTER);
         l.setFont(FONT_BODY); return l;
     }
     private static void setAvgLabel(JLabel lbl, String name, double val) {
-        lbl.setText("<html><center><span style='color:#8080aa;font-size:11px'>"
-                + name + "</span><br><b style='font-size:16px;color:#e2e2f0'>"
+        lbl.setText("<html><center><span style='color:#A6B9CA;font-size:11px'>"
+                + name + "</span><br><b style='font-size:16px;color:#EBF4FA'>"
                 + String.format("%.2f", val) + "</b></center></html>");
     }
     private static JPanel paramRow(JLabel lbl, JComponent ctrl) {
@@ -566,7 +641,7 @@ public class SchedulerGUI extends JFrame {
         t.setSelectionBackground(ACCENT.darker()); t.setSelectionForeground(Color.WHITE);
         t.setShowHorizontalLines(true); t.setShowVerticalLines(false);
         JTableHeader h = t.getTableHeader();
-        h.setBackground(new Color(40,40,70)); h.setForeground(ACCENT); h.setFont(FONT_BOLD);
+        h.setBackground(new Color(34,52,70)); h.setForeground(ACCENT); h.setFont(FONT_BOLD);
         return t;
     }
     private static JScrollPane styledScroll(Component c) {
@@ -576,25 +651,25 @@ public class SchedulerGUI extends JFrame {
     }
     private static JButton smallBtn(String t) {
         JButton b = new JButton(t);
-        b.setFont(FONT_SMALL); b.setBackground(new Color(50,50,80)); b.setForeground(TEXT);
+        b.setFont(FONT_SMALL); b.setBackground(new Color(38,60,78)); b.setForeground(TEXT);
         b.setFocusPainted(false); b.setBorder(new EmptyBorder(4,10,4,10));
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); return b;
     }
     private static JSpinner styledSpinner(int v, int min, int max, int step) {
         JSpinner s = new JSpinner(new SpinnerNumberModel(v, min, max, step));
         s.setFont(FONT_BODY); s.setPreferredSize(new Dimension(72, 28));
-        ((JSpinner.DefaultEditor) s.getEditor()).getTextField().setBackground(new Color(40,40,70));
+        ((JSpinner.DefaultEditor) s.getEditor()).getTextField().setBackground(new Color(34,52,70));
         ((JSpinner.DefaultEditor) s.getEditor()).getTextField().setForeground(TEXT);
         ((JSpinner.DefaultEditor) s.getEditor()).getTextField().setFont(FONT_BODY); return s;
     }
     private static void styleCombo(JComboBox<String> c) {
-        c.setFont(FONT_BODY); c.setBackground(new Color(40,40,70)); c.setForeground(TEXT);
+        c.setFont(FONT_BODY); c.setBackground(new Color(34,52,70)); c.setForeground(TEXT);
         c.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
         c.setAlignmentX(Component.LEFT_ALIGNMENT);
     }
     private static JTextArea monoArea() {
         JTextArea a = new JTextArea(2, 20);
-        a.setFont(FONT_MONO); a.setBackground(new Color(22,22,40)); a.setForeground(TEXT);
+        a.setFont(FONT_MONO); a.setBackground(new Color(16,29,43)); a.setForeground(TEXT);
         a.setEditable(false); a.setLineWrap(true); a.setWrapStyleWord(true);
         a.setBorder(new EmptyBorder(4,6,4,6)); return a;
     }
@@ -615,7 +690,7 @@ public class SchedulerGUI extends JFrame {
     }
     private static Component vGap(int h) { return Box.createRigidArea(new Dimension(0, h)); }
 
-    // ── Alternating row renderer ──────────────────────────────────────────────
+
     private static class AlternatingRenderer extends DefaultTableCellRenderer {
         public Component getTableCellRendererComponent(JTable t, Object v, boolean sel,
                 boolean foc, int row, int col) {
@@ -626,11 +701,11 @@ public class SchedulerGUI extends JFrame {
         }
     }
 
-    // ── Gantt chart ───────────────────────────────────────────────────────────
+
     interface TimeSelectListener { void onSelect(int t); }
 
     static class GanttPanel extends JPanel {
-        private final List<int[]> blocks = new ArrayList<>(); // {startT, endT}
+        private final List<int[]> blocks = new ArrayList<>();
         private final List<String> blockKinds = new ArrayList<>();
         private final List<String> blockLabels = new ArrayList<>();
         private final Map<String, Color> colorMap = new HashMap<>();
@@ -716,8 +791,8 @@ public class SchedulerGUI extends JFrame {
                 int w = Math.max(4, (tEnd - tStart) * BW - 2);
 
                 Color fill;
-                if ("CS".equals(kind))        fill = new Color(80, 80, 110);
-                else if ("IDLE".equals(kind)) fill = new Color(50, 50, 70);
+                if ("CS".equals(kind))        fill = new Color(78, 100, 119);
+                else if ("IDLE".equals(kind)) fill = new Color(53, 73, 92);
                 else                          fill = colorMap.getOrDefault(lbl, ACCENT);
 
                 g2.setColor(fill);
@@ -741,7 +816,7 @@ public class SchedulerGUI extends JFrame {
             g2.setColor(TEXT_DIM);
             g2.drawString(String.valueOf(endTime), X_PAD + endTime * BW, YO + BH + LH);
 
-            // Highlight selected time index t
+
             if (highlight >= 0) {
                 int cx = X_PAD + highlight * BW;
                 if (highlight < endTime) {
@@ -764,7 +839,7 @@ public class SchedulerGUI extends JFrame {
         }
     }
 
-    // ── Entry ─────────────────────────────────────────────────────────────────
+
     public static void main(String[] args) {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ignored) {}
         SwingUtilities.invokeLater(SchedulerGUI::new);

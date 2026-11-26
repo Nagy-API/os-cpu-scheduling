@@ -1,18 +1,12 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
-/**
- * A single priority tier (Tier-2) that holds processes waiting for the CPU.
- * Aging boosts the effective priority by 1 for every {@code agingInterval}
- * time units a process has been waiting in this tier.
- *
- * Lower numeric priority value == higher urgency (0 is most urgent).
- */
 public class PriorityTier {
     private final List<SimProcess> queue = new ArrayList<>();
-    /** Tracks the time each process entered this tier (independent of SimProcess state). */
     private final Map<SimProcess, Integer> entryTimes = new HashMap<>();
     private final int agingInterval;
 
@@ -21,67 +15,50 @@ public class PriorityTier {
         this.agingInterval = agingInterval;
     }
 
-    /** Add a process to this tier at the given simulation time. */
     public void add(SimProcess process, int time) {
-        if (process == null) throw new IllegalArgumentException("Process cannot be null");
+        if (process == null || time < 0 || process.getRemainingTime() == 0) {
+            throw new IllegalArgumentException("Invalid Tier 2 process or time");
+        }
+        if (queue.contains(process)) throw new IllegalStateException("Process already waiting in Tier 2");
+        if (process.getTier2EntryTime() == -1) process.enterTier2(time);
+        if (time < process.getTier2EntryTime()) throw new IllegalArgumentException("Invalid Tier 2 time");
+        entryTimes.putIfAbsent(process, process.getTier2EntryTime());
         queue.add(process);
-        entryTimes.put(process, time);
     }
 
-    /**
-     * Pick the process with the lowest effective priority (highest urgency).
-     * Ties are broken by arrival time (FCFS).
-     * Does NOT remove the process from the queue.
-     */
     public SimProcess chooseNext(int time) {
-        if (queue.isEmpty()) return null;
         SimProcess best = null;
-        int bestPriority = Integer.MAX_VALUE;
         for (SimProcess p : queue) {
-            int ep = effectivePriority(p, time);
-            if (ep < bestPriority || (ep == bestPriority && best != null &&
-                    p.getArrivalTime() < best.getArrivalTime())) {
-                bestPriority = ep;
+            if (best == null || effectivePriority(p, time) < effectivePriority(best, time) ||
+                    (effectivePriority(p, time) == effectivePriority(best, time) &&
+                     entryTimes.get(p) < entryTimes.get(best))) {
                 best = p;
             }
         }
         return best;
     }
 
-    /**
-     * Effective priority = initialPriority – agingBoost.
-     * agingBoost = floor(waitingInTier2 / agingInterval), clamped so result >= 0.
-     */
-    public int effectivePriority(SimProcess process, int time) {
-        if (process == null) throw new IllegalArgumentException("Process cannot be null");
-        Integer entryTime = entryTimes.get(process);
-        if (entryTime == null) return process.getInitialPriority();
-        int waited = Math.max(0, time - entryTime);
-        int boost  = waited / agingInterval;
-        return Math.max(0, process.getInitialPriority() - boost);
+    public void remove(SimProcess process) {
+        if (!queue.remove(process)) throw new IllegalArgumentException("Process not found in Tier 2");
     }
 
-    /**
-     * Human-readable snapshot of the tier's queue at the given time.
-     */
+    public int effectivePriority(SimProcess process, int time) {
+        Integer entry = entryTimes.get(process);
+        if (entry == null || time < entry) throw new IllegalArgumentException("Invalid aging time or process");
+        long priority = (long) process.getInitialPriority() - (time - entry) / agingInterval;
+        return (int) Math.max(Integer.MIN_VALUE, priority);
+    }
+
     public String snapshot(int time) {
-        if (queue.isEmpty()) return "tier2:[]";
-        StringBuilder sb = new StringBuilder("tier2:[");
+        StringJoiner parts = new StringJoiner(", ", "tier2:[", "]");
         for (SimProcess p : queue) {
-            sb.append(p.getId())
-              .append("(ep:").append(effectivePriority(p, time))
-              .append(",rem:").append(p.getRemainingTime())
-              .append("), ");
+            parts.add(p.getId() + "(remaining:" + p.getRemainingTime() +
+                      ", effectivePriority:" + effectivePriority(p, time) + ")");
         }
-        sb.setLength(sb.length() - 2);
-        sb.append("]");
-        return sb.toString();
+        return parts.toString();
     }
 
     public boolean isEmpty() { return queue.isEmpty(); }
-
-    /** Direct access to the backing list (e.g. to remove a chosen process). */
-    public List<SimProcess> getQueue() { return queue; }
-
+    public List<SimProcess> getQueue() { return Collections.unmodifiableList(queue); }
     public int getAgingInterval() { return agingInterval; }
 }
