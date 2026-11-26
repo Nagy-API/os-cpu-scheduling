@@ -1,6 +1,9 @@
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
+import javax.swing.plaf.basic.BasicArrowButton;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
@@ -210,6 +213,7 @@ public class SchedulerGUI extends JFrame {
 
         ganttPanel = new GanttPanel(t -> navigateToTime(t));
         JScrollPane ganttScroll = styledScroll(ganttPanel);
+        styleTimelineScrollBar(ganttScroll.getHorizontalScrollBar());
         ganttScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         ganttScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         ganttScroll.setPreferredSize(new Dimension(0, 96));
@@ -525,6 +529,25 @@ public class SchedulerGUI extends JFrame {
 
 
     private static void styleTabs(JTabbedPane tabs) {
+        tabs.setUI(new BasicTabbedPaneUI() {
+            protected void paintTabBackground(Graphics g, int placement, int index,
+                                              int x, int y, int w, int h, boolean selected) {
+                g.setColor(BG);
+                g.fillRect(x, y, w, h);
+            }
+
+            protected void paintTabBorder(Graphics g, int placement, int index,
+                                          int x, int y, int w, int h, boolean selected) {
+            }
+
+            protected void paintContentBorder(Graphics g, int placement, int selectedIndex) {
+            }
+
+            protected void paintFocusIndicator(Graphics g, int placement, Rectangle[] rectangles,
+                                               int index, Rectangle iconRect, Rectangle textRect,
+                                               boolean selected) {
+            }
+        });
         for (int i = 0; i < tabs.getTabCount(); i++) {
             final int index = i;
             JLabel header = new JLabel(tabs.getTitleAt(i), SwingConstants.CENTER);
@@ -549,6 +572,36 @@ public class SchedulerGUI extends JFrame {
             header.setBackground(selected ? ACCENT : PANEL_BG);
             header.setForeground(selected ? BG : TEXT);
         }
+    }
+
+    private static void styleTimelineScrollBar(JScrollBar bar) {
+        bar.setBackground(PANEL_BG);
+        bar.setUI(new BasicScrollBarUI() {
+            protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
+                g.setColor(new Color(19, 37, 52));
+                g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+            }
+
+            protected void paintThumb(Graphics g, JComponent c, Rectangle bounds) {
+                if (bounds.isEmpty() || !c.isEnabled()) return;
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                    RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(77, 173, 213));
+                g2.fillRoundRect(bounds.x + 2, bounds.y + 2,
+                                 Math.max(0, bounds.width - 4),
+                                 Math.max(0, bounds.height - 4), 8, 8);
+                g2.dispose();
+            }
+
+            protected JButton createDecreaseButton(int direction) {
+                return new BasicArrowButton(direction, PANEL_BG, BORDER_C, BG, ACCENT);
+            }
+
+            protected JButton createIncreaseButton(int direction) {
+                return new BasicArrowButton(direction, PANEL_BG, BORDER_C, BG, ACCENT);
+            }
+        });
     }
 
     private static JPanel darkPanel(LayoutManager lm) {
