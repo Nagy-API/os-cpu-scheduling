@@ -1,9 +1,7 @@
-import java.util.Comparator;
-
 public class SimProcess {
     private final String id;
     private final int arrivalTime, burstTime, initialPriority;
-    private int remainingTime, currentPriority;
+    private int remainingTime;
     private int firstStartTime = -1, completionTime = -1, tier2EntryTime = -1;
 
     public SimProcess(String id, int arrival, int burst, int priority) {
@@ -14,7 +12,6 @@ public class SimProcess {
         arrivalTime = arrival;
         burstTime = burst;
         initialPriority = priority;
-        currentPriority = priority;
         remainingTime = burst;
     }
 
@@ -77,21 +74,7 @@ public class SimProcess {
     public int getArrivalTime() { return arrivalTime; }
     public int getBurstTime() { return burstTime; }
     public int getInitialPriority() { return initialPriority; }
-    public int getCurrentPriority() { return currentPriority; }
     public int getRemainingTime() { return remainingTime; }
     public int getTier2EntryTime() { return tier2EntryTime; }
     public int getCompletionTime() { return completionTime; }
-
-    public static class DefaultComparator implements Comparator<SimProcess> {
-        @Override
-        public int compare(SimProcess first, SimProcess second) {
-            // sorted by arrival time
-            if (first.getArrivalTime() < second.getArrivalTime()){
-                return -1;
-            } else if (first.getArrivalTime() == second.getArrivalTime()){
-                return 0;
-            }
-            return 1;
-        }
-    }
 }
