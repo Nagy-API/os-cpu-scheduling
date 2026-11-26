@@ -81,7 +81,7 @@ public class ConsolePrinter {
 
         int endTime = Math.max(lastCompletion, maxEventTime);
 
-        System.out.println(BOLD + "  Timeline (t = 0 .. " + endTime + ")" + RESET);
+        System.out.println(BOLD + "  Timeline (t = 0 .. " + (endTime - 1) + ")" + RESET);
         line('-', 110);
         System.out.printf(BOLD + "%-5s %-6s %-7s  %-38s %-24s  %s%n" + RESET,
                 "t", "Kind", "CPU", "Tier-1 / Queue", "Tier-2", "Event");
@@ -89,7 +89,7 @@ public class ConsolePrinter {
 
         TimeStep currentState = null;
 
-        for (int t = 0; t <= endTime; t++) {
+        for (int t = 0; t < endTime; t++) {
             List<TimeStep> atT = eventsByTime.get(t);
             String eventDesc = "";
             if (atT != null && !atT.isEmpty()) {
