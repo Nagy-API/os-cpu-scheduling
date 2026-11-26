@@ -1,5 +1,4 @@
 .vscode/
 bin/
-
-# compiled Java bytecode
+out/
 *.class
