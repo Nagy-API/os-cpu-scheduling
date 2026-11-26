@@ -11,18 +11,18 @@ import java.util.List;
 public class SchedulerGUI extends JFrame {
 
 
-    private static final Color BG       = new Color(18,  18,  32);
-    private static final Color PANEL_BG = new Color(28,  28,  48);
-    private static final Color ACCENT   = new Color(99,  102, 241);
-    private static final Color ACCENT2  = new Color(16,  185, 129);
-    private static final Color ACCENT3  = new Color(245, 158,  11);
-    private static final Color TEXT     = new Color(226, 226, 240);
-    private static final Color TEXT_DIM = new Color(140, 140, 170);
-    private static final Color ROW_ALT  = new Color(36,  36,  60);
-    private static final Color BORDER_C = new Color(55,  55,  90);
-    private static final Color C_RUN    = new Color(16,  185, 129);
-    private static final Color C_CS     = new Color(245, 158,  11);
-    private static final Color C_IDLE   = new Color(90,  90, 120);
+    private static final Color BG       = new Color(12,  22,  34);
+    private static final Color PANEL_BG = new Color(22,  36,  52);
+    private static final Color ACCENT   = new Color(56,  189, 248);
+    private static final Color ACCENT2  = new Color(52,  211, 153);
+    private static final Color ACCENT3  = new Color(251, 191,  36);
+    private static final Color TEXT     = new Color(235, 244, 250);
+    private static final Color TEXT_DIM = new Color(166, 185, 202);
+    private static final Color ROW_ALT  = new Color(28,  45,  63);
+    private static final Color BORDER_C = new Color(58,  82, 103);
+    private static final Color C_RUN    = new Color(52,  211, 153);
+    private static final Color C_CS     = new Color(251, 191,  36);
+    private static final Color C_IDLE   = new Color(100, 116, 139);
 
     private static final Font FONT_BODY  = new Font("Segoe UI", Font.PLAIN,  14);
     private static final Font FONT_BOLD  = new Font("Segoe UI", Font.BOLD,   14);
@@ -31,9 +31,9 @@ public class SchedulerGUI extends JFrame {
     private static final Font FONT_MONO  = new Font("Consolas",  Font.PLAIN,  13);
 
     private static final Color[] PROC_COLORS = {
-        new Color(99,102,241), new Color(16,185,129), new Color(245,158,11),
-        new Color(239,68,68),  new Color(14,165,233), new Color(217,70,239),
-        new Color(251,191,36), new Color(52,211,153)
+        new Color(37,99,235), new Color(15,118,110), new Color(217,119,6),
+        new Color(190,24,93), new Color(14,116,144), new Color(124,58,237),
+        new Color(180,83,9), new Color(5,150,105)
     };
 
 
@@ -155,7 +155,7 @@ public class SchedulerGUI extends JFrame {
 
         JButton runBtn = new JButton("▶  Run Simulation");
         runBtn.setFont(FONT_BOLD); runBtn.setBackground(ACCENT);
-        runBtn.setForeground(Color.WHITE); runBtn.setFocusPainted(false);
+        runBtn.setForeground(BG); runBtn.setFocusPainted(false);
         runBtn.setBorder(new EmptyBorder(10, 20, 10, 20));
         runBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         runBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -319,6 +319,7 @@ public class SchedulerGUI extends JFrame {
         });
 
         tabs.addTab("Timeline", timelineTab);
+        styleTabs(tabs);
         add(tabs, BorderLayout.CENTER);
 
 
@@ -429,7 +430,7 @@ public class SchedulerGUI extends JFrame {
             timeSlider.setValue(0);
 
             timeJumpSpinner.setModel(new SpinnerNumberModel(0, 0, Math.max(0, maxTime), 1));
-            ((JSpinner.DefaultEditor) timeJumpSpinner.getEditor()).getTextField().setBackground(new Color(40,40,70));
+            ((JSpinner.DefaultEditor) timeJumpSpinner.getEditor()).getTextField().setBackground(new Color(34,52,70));
             ((JSpinner.DefaultEditor) timeJumpSpinner.getEditor()).getTextField().setForeground(TEXT);
             ((JSpinner.DefaultEditor) timeJumpSpinner.getEditor()).getTextField().setFont(FONT_BODY);
         } finally {
@@ -523,6 +524,33 @@ public class SchedulerGUI extends JFrame {
     }
 
 
+    private static void styleTabs(JTabbedPane tabs) {
+        for (int i = 0; i < tabs.getTabCount(); i++) {
+            final int index = i;
+            JLabel header = new JLabel(tabs.getTitleAt(i), SwingConstants.CENTER);
+            header.setOpaque(true);
+            header.setFont(FONT_BOLD);
+            header.setBorder(new EmptyBorder(6, 14, 6, 14));
+            header.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    tabs.setSelectedIndex(index);
+                }
+            });
+            tabs.setTabComponentAt(i, header);
+        }
+        tabs.addChangeListener(e -> refreshTabColors(tabs));
+        refreshTabColors(tabs);
+    }
+
+    private static void refreshTabColors(JTabbedPane tabs) {
+        for (int i = 0; i < tabs.getTabCount(); i++) {
+            JLabel header = (JLabel) tabs.getTabComponentAt(i);
+            boolean selected = i == tabs.getSelectedIndex();
+            header.setBackground(selected ? ACCENT : PANEL_BG);
+            header.setForeground(selected ? BG : TEXT);
+        }
+    }
+
     private static JPanel darkPanel(LayoutManager lm) {
         JPanel p = new JPanel(lm);
         p.setBackground(PANEL_BG);
@@ -537,14 +565,14 @@ public class SchedulerGUI extends JFrame {
         l.setAlignmentX(Component.LEFT_ALIGNMENT); return l;
     }
     private static JLabel avgLabel(String n, String v) {
-        JLabel l = new JLabel("<html><center><span style='color:#8080aa;font-size:11px'>"
-                + n + "</span><br><b style='font-size:16px;color:#e2e2f0'>" + v + "</b></center></html>",
+        JLabel l = new JLabel("<html><center><span style='color:#A6B9CA;font-size:11px'>"
+                + n + "</span><br><b style='font-size:16px;color:#EBF4FA'>" + v + "</b></center></html>",
                 SwingConstants.CENTER);
         l.setFont(FONT_BODY); return l;
     }
     private static void setAvgLabel(JLabel lbl, String name, double val) {
-        lbl.setText("<html><center><span style='color:#8080aa;font-size:11px'>"
-                + name + "</span><br><b style='font-size:16px;color:#e2e2f0'>"
+        lbl.setText("<html><center><span style='color:#A6B9CA;font-size:11px'>"
+                + name + "</span><br><b style='font-size:16px;color:#EBF4FA'>"
                 + String.format("%.2f", val) + "</b></center></html>");
     }
     private static JPanel paramRow(JLabel lbl, JComponent ctrl) {
@@ -560,7 +588,7 @@ public class SchedulerGUI extends JFrame {
         t.setSelectionBackground(ACCENT.darker()); t.setSelectionForeground(Color.WHITE);
         t.setShowHorizontalLines(true); t.setShowVerticalLines(false);
         JTableHeader h = t.getTableHeader();
-        h.setBackground(new Color(40,40,70)); h.setForeground(ACCENT); h.setFont(FONT_BOLD);
+        h.setBackground(new Color(34,52,70)); h.setForeground(ACCENT); h.setFont(FONT_BOLD);
         return t;
     }
     private static JScrollPane styledScroll(Component c) {
@@ -570,25 +598,25 @@ public class SchedulerGUI extends JFrame {
     }
     private static JButton smallBtn(String t) {
         JButton b = new JButton(t);
-        b.setFont(FONT_SMALL); b.setBackground(new Color(50,50,80)); b.setForeground(TEXT);
+        b.setFont(FONT_SMALL); b.setBackground(new Color(38,60,78)); b.setForeground(TEXT);
         b.setFocusPainted(false); b.setBorder(new EmptyBorder(4,10,4,10));
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); return b;
     }
     private static JSpinner styledSpinner(int v, int min, int max, int step) {
         JSpinner s = new JSpinner(new SpinnerNumberModel(v, min, max, step));
         s.setFont(FONT_BODY); s.setPreferredSize(new Dimension(72, 28));
-        ((JSpinner.DefaultEditor) s.getEditor()).getTextField().setBackground(new Color(40,40,70));
+        ((JSpinner.DefaultEditor) s.getEditor()).getTextField().setBackground(new Color(34,52,70));
         ((JSpinner.DefaultEditor) s.getEditor()).getTextField().setForeground(TEXT);
         ((JSpinner.DefaultEditor) s.getEditor()).getTextField().setFont(FONT_BODY); return s;
     }
     private static void styleCombo(JComboBox<String> c) {
-        c.setFont(FONT_BODY); c.setBackground(new Color(40,40,70)); c.setForeground(TEXT);
+        c.setFont(FONT_BODY); c.setBackground(new Color(34,52,70)); c.setForeground(TEXT);
         c.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
         c.setAlignmentX(Component.LEFT_ALIGNMENT);
     }
     private static JTextArea monoArea() {
         JTextArea a = new JTextArea(2, 20);
-        a.setFont(FONT_MONO); a.setBackground(new Color(22,22,40)); a.setForeground(TEXT);
+        a.setFont(FONT_MONO); a.setBackground(new Color(16,29,43)); a.setForeground(TEXT);
         a.setEditable(false); a.setLineWrap(true); a.setWrapStyleWord(true);
         a.setBorder(new EmptyBorder(4,6,4,6)); return a;
     }
@@ -710,8 +738,8 @@ public class SchedulerGUI extends JFrame {
                 int w = Math.max(4, (tEnd - tStart) * BW - 2);
 
                 Color fill;
-                if ("CS".equals(kind))        fill = new Color(80, 80, 110);
-                else if ("IDLE".equals(kind)) fill = new Color(50, 50, 70);
+                if ("CS".equals(kind))        fill = new Color(78, 100, 119);
+                else if ("IDLE".equals(kind)) fill = new Color(53, 73, 92);
                 else                          fill = colorMap.getOrDefault(lbl, ACCENT);
 
                 g2.setColor(fill);
